@@ -1,3 +1,4 @@
+require "utils.globals"
 require "utils.hud"
 require "sprites.player"
 

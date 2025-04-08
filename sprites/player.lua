@@ -58,7 +58,17 @@ function player:update_bullets(dt)
     for i = #self.bullets, 1, -1 do
         local bullet = self.bullets[i]
         bullet.rect.x = bullet.rect.x + bullet.direction.x * bullet.speed * dt
-        bullet.rect.y = bullet.rect.y + bullet.direction.x * bullet.speed * dt
+        bullet.rect.y = bullet.rect.y + bullet.direction.y * bullet.speed * dt
+        if bullet.hide_timer > 0 then
+            bullet.hide_timer = bullet.hide_timer - dt
+        end
+        update_color(bullet, dt, 200)
+
+        for j = 1, #bullet.sparkles do
+            bullet.sparkles[j].x = bullet.sparkles[j].x + bullet.direction.x * bullet.speed * dt
+            bullet.sparkles[j].y = bullet.sparkles[j].y + bullet.direction.y * bullet.speed * dt
+            update_color(bullet.sparkles[j], dt, 200)
+        end
 
         if (bullet.rect.x > canvas_width + 200) or (bullet.rect.x < -200) or
             (bullet.rect.y > canvas_height + 200) or (bullet.rect.y < -200) then
@@ -70,13 +80,65 @@ end
 function player:shoot(dt)
     self.shoot_timer = self.shoot_timer - dt
     if self.shoot_timer < 0 then
-        self.shoot_timer = 0.35
+        self.shoot_timer = 0.3
+
         local length = math.sqrt(self.crosshair_vector.x ^ 2 + self.crosshair_vector.y ^ 2)
         local direction = { x = self.crosshair_vector.x / length, y = self.crosshair_vector.y / length }
+        local position = { x = self.origin.x + direction.x * 40, y = self.origin.y + direction.y * 40 }
+        local sparkles = {}
+
+        local inverted_direction = {
+            x = direction.x * math.cos(math.pi) - direction.y * math.sin(math.pi),
+            y = direction.x * math.sin(math.pi) + direction.y * math.cos(math.pi)
+        }
+
+        local rotated_dir1 = {
+            x = direction.x * math.cos(math.pi / 2) - direction.y * math.sin(math.pi / 2),
+            y = direction.x * math.sin(math.pi / 2) + direction.y * math.cos(math.pi / 2)
+        }
+
+        local rotated_dir2 = {
+            x = direction.x * math.cos(-math.pi / 2) - direction.y * math.sin(-math.pi / 2),
+            y = direction.x * math.sin(-math.pi / 2) + direction.y * math.cos(-math.pi / 2)
+        }
+
+        local degree = math.random(0, 360)
+
+        for i = 1, 4 do
+            local point1 = {
+                x = position.x + inverted_direction.x * i * 20 + rotated_dir1.x * 7,
+                y = position.y + inverted_direction.y * i * 20 + rotated_dir1.y * 7,
+                size = 15 - i * 2
+            }
+            point1.x, point1.y = point1.x - point1.size / 2, point1.y - point1.size / 2
+            point1.color_degree = degree
+            point1.color = { 0, 0, 0 }
+
+            table.insert(sparkles, point1)
+
+            local point2 = {
+                x = position.x + inverted_direction.x * i * 20 + rotated_dir2.x * 7.5,
+                y = position.y + inverted_direction.y * i * 20 + rotated_dir2.y * 7.5,
+                size = 15 - i * 2
+            }
+            point2.x, point2.y = point2.x - point2.size / 2, point2.y - point2.size / 2
+            point2.color_degree = degree
+            point2.color = { 0, 0, 0 }
+
+            table.insert(sparkles, point2)
+
+            degree = degree + 20
+        end
+
+        position.x, position.y = position.x - 12.5, position.y - 12.5
         table.insert(self.bullets, {
             direction = direction,
-            rect = { x = self.origin.x + direction.x * 40 - 10, y = self.origin.y + direction.y * 40 - 10, width = 20, height = 20 },
-            speed = 1200
+            rect = { x = position.x, y = position.y, width = 25, height = 25 },
+            speed = 1200,
+            sparkles = sparkles,
+            color_degree = degree,
+            hide_timer = 0.25,
+            color = { 0, 0, 0 }
         })
     end
 end
@@ -98,9 +160,20 @@ function player:draw_crosshair()
 end
 
 function player:draw_bullets()
-    love.graphics.setColor(1, 1, 1, 1)
     for i = 1, #self.bullets do
-        local rect = self.bullets[i].rect
-        love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height)
+        local bullet = self.bullets[i]
+        if bullet.hide_timer < 0 then
+            local r, g, b = unpack(bullet.color)
+            love.graphics.setColor(r, g, b, 1)
+            love.graphics.rectangle("fill", bullet.rect.x, bullet.rect.y, bullet.rect.width, bullet.rect.height)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
+        for j = 1, #bullet.sparkles do
+            local x, y, size = bullet.sparkles[j].x, bullet.sparkles[j].y, bullet.sparkles[j].size
+            local r, g, b = unpack(bullet.sparkles[j].color)
+            love.graphics.setColor(r, g, b, 1)
+            love.graphics.rectangle("fill", x, y, size, size)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
     end
 end

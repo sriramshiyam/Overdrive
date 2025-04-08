@@ -1,33 +1,18 @@
 hud = {}
 
 function hud:load()
-    self.outlineColor = { 0, 0, 0 }
-    self.outlineColorDegree = 0
-    self.red_vector = { 1, 0 }
-    self.green_vector = { math.cos(120 * math.pi / 180), math.sin(120 * math.pi / 180) }
-    self.blue_vector = { math.cos(240 * math.pi / 180), math.sin(240 * math.pi / 180) }
+    self.color = { 0, 0, 0 }
+    self.color_degree = 0
     self.bx = 0
     self.by = 0
 end
 
 function hud:update(dt)
-    self.outlineColorDegree = self.outlineColorDegree + dt * 200
-
-    local radian = self.outlineColorDegree * math.pi / 180
-    local cx, cy = unpack({ math.cos(radian), math.sin(radian) })
-
-    local rx, ry = unpack(self.red_vector)
-    self.outlineColor[1] = ((cx * rx + cy * ry) + 1) / 2
-
-    local gx, gy = unpack(self.green_vector)
-    self.outlineColor[2] = ((cx * gx + cy * gy) + 1) / 2
-
-    local bx, by = unpack(self.blue_vector)
-    self.outlineColor[3] = ((cx * bx + cy * by) + 1) / 2
+    update_color(self, dt, 200)
 end
 
 function hud:draw()
-    local r, g, b = unpack(self.outlineColor)
+    local r, g, b = unpack(self.color)
     love.graphics.setColor(r, g, b, 1)
 
     local start_pos, end_pos
