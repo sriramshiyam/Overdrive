@@ -59,9 +59,6 @@ function player:update_bullets(dt)
         local bullet = self.bullets[i]
         bullet.rect.x = bullet.rect.x + bullet.direction.x * bullet.speed * dt
         bullet.rect.y = bullet.rect.y + bullet.direction.y * bullet.speed * dt
-        if bullet.hide_timer > 0 then
-            bullet.hide_timer = bullet.hide_timer - dt
-        end
         update_color(bullet, dt, 200)
 
         for j = 1, #bullet.sparkles do
@@ -134,10 +131,9 @@ function player:shoot(dt)
         table.insert(self.bullets, {
             direction = direction,
             rect = { x = position.x, y = position.y, width = 25, height = 25 },
-            speed = 1200,
+            speed = 1500,
             sparkles = sparkles,
             color_degree = degree,
-            hide_timer = 0.25,
             color = { 0, 0, 0 }
         })
     end
@@ -162,15 +158,13 @@ end
 function player:draw_bullets()
     for i = 1, #self.bullets do
         local bullet = self.bullets[i]
-        if bullet.hide_timer < 0 then
-            local r, g, b = unpack(bullet.color)
-            love.graphics.setColor(r, g, b, 1)
-            love.graphics.rectangle("fill", bullet.rect.x, bullet.rect.y, bullet.rect.width, bullet.rect.height)
-            love.graphics.setColor(1, 1, 1, 1)
-        end
+        local r, g, b = unpack(bullet.color)
+        love.graphics.setColor(r, g, b, 1)
+        love.graphics.rectangle("fill", bullet.rect.x, bullet.rect.y, bullet.rect.width, bullet.rect.height)
+        love.graphics.setColor(1, 1, 1, 1)
         for j = 1, #bullet.sparkles do
             local x, y, size = bullet.sparkles[j].x, bullet.sparkles[j].y, bullet.sparkles[j].size
-            local r, g, b = unpack(bullet.sparkles[j].color)
+            r, g, b = unpack(bullet.sparkles[j].color)
             love.graphics.setColor(r, g, b, 1)
             love.graphics.rectangle("fill", x, y, size, size)
             love.graphics.setColor(1, 1, 1, 1)

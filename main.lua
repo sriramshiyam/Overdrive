@@ -1,6 +1,7 @@
 require "utils.globals"
 require "utils.hud"
 require "sprites.player"
+require "sprites.enemies"
 
 canvas_width = 1024
 canvas_height = 768
@@ -9,7 +10,6 @@ local canvas
 canvas_offset_x = 0
 canvas_offset_y = 0
 scale = 1
-sleep = 0
 
 function love.load()
     love.window.setTitle("Overdrive")
@@ -24,12 +24,13 @@ function love.load()
     end
     hud:load()
     player:load()
+    enemies:load()
 end
 
 function love.update(dt)
     hud:update(dt)
     player:update(dt)
-    love.timer.sleep(sleep)
+    enemies:update(dt)
 end
 
 function love.draw()
@@ -37,6 +38,7 @@ function love.draw()
     love.graphics.clear()
     hud:draw()
     player:draw()
+    enemies:draw()
     love.graphics.setCanvas()
     love.graphics.clear()
     love.graphics.draw(canvas, canvas_offset_x, canvas_offset_y, 0, scale, scale)
