@@ -131,7 +131,7 @@ function player:shoot(dt)
         table.insert(self.bullets, {
             direction = direction,
             rect = { x = position.x, y = position.y, width = 25, height = 25 },
-            speed = 1500,
+            speed = 1000,
             sparkles = sparkles,
             color_degree = degree,
             color = { 0, 0, 0 }
