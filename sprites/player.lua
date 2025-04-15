@@ -4,13 +4,19 @@ function player:load()
     self.texture = love.graphics.newImage("res/image/player.png")
     self.position = { x = 0, y = 0 }
     self.direction = { x = 0, y = 0 }
-    self.origin = { x = 0, y = 0 }
     self.speed = 600
     self.crosshair_texture = love.graphics.newImage("res/image/crosshair.png")
-    self.crosshair_vector = { x = 100, y = 100 }
+    self.origin = {
+        x = self.position.x + self.crosshair_texture:getWidth() / 2,
+        y = self.position.y + self.crosshair_texture:getHeight() / 2
+    }
+    self.crosshair_vector = { x = math.cos(math.pi / 4), y = math.cos(math.pi / 4) }
+    self.crosshair_length = 120
     self.crosshair_rotation = 0
+    self.crosshair_speed = 200
     self.bullets = {}
     self.shoot_timer = 0
+    self.enemy_vector = { x = 0, y = 0 }
 end
 
 function player:update(dt)
@@ -52,6 +58,44 @@ end
 
 function player:update_crosshair(dt)
     self.crosshair_rotation = self.crosshair_rotation + dt * 300
+
+    local nearest_enemy = nil
+    local nearest_length = canvas_width
+
+    for i = 1, #enemies.list do
+        local enemy = enemies.list[i]
+        local length = vector_length(enemy.origin.x - self.origin.x, enemy.origin.y - self.origin.y)
+        if length < nearest_length then
+            nearest_length = length
+            nearest_enemy = enemy
+        end
+    end
+
+    if nearest_enemy ~= nil then
+        local enemy_vector = {
+            x = nearest_enemy.origin.x - self.origin.x,
+            y = nearest_enemy.origin.y - self.origin.y
+        }
+        local length = vector_length(enemy_vector.x, enemy_vector.y)
+        enemy_vector.x = enemy_vector.x / length
+        enemy_vector.y = enemy_vector.y / length
+        local crosshair_vector = self.crosshair_vector
+
+        local dot_product = crosshair_vector.x * enemy_vector.x + crosshair_vector.y * enemy_vector.y
+
+        if dot_product < 0.9999 then
+            local radian = self.crosshair_speed * dt * math.pi / 180
+            local cross_product = crosshair_vector.x * enemy_vector.y - crosshair_vector.y * enemy_vector.x
+
+            if cross_product < 0 then
+                radian = radian * -1
+            end
+
+            crosshair_vector.x, crosshair_vector.y =
+                crosshair_vector.x * math.cos(radian) - crosshair_vector.y * math.sin(radian),
+                crosshair_vector.x * math.sin(radian) + crosshair_vector.y * math.cos(radian)
+        end
+    end
 end
 
 function player:update_bullets(dt)
@@ -79,24 +123,27 @@ function player:shoot(dt)
     if self.shoot_timer < 0 then
         self.shoot_timer = 0.3
 
-        local length = math.sqrt(self.crosshair_vector.x ^ 2 + self.crosshair_vector.y ^ 2)
-        local direction = { x = self.crosshair_vector.x / length, y = self.crosshair_vector.y / length }
-        local position = { x = self.origin.x + direction.x * 40, y = self.origin.y + direction.y * 40 }
+        local position = {
+            x = self.origin.x + self.crosshair_vector.x * 40,
+            y = self.origin.y +
+                self.crosshair_vector.y * 40
+        }
         local sparkles = {}
+        local crosshair_vector = self.crosshair_vector
 
         local inverted_direction = {
-            x = direction.x * math.cos(math.pi) - direction.y * math.sin(math.pi),
-            y = direction.x * math.sin(math.pi) + direction.y * math.cos(math.pi)
+            x = crosshair_vector.x * math.cos(math.pi) - crosshair_vector.y * math.sin(math.pi),
+            y = crosshair_vector.x * math.sin(math.pi) + crosshair_vector.y * math.cos(math.pi)
         }
 
         local rotated_dir1 = {
-            x = direction.x * math.cos(math.pi / 2) - direction.y * math.sin(math.pi / 2),
-            y = direction.x * math.sin(math.pi / 2) + direction.y * math.cos(math.pi / 2)
+            x = crosshair_vector.x * math.cos(math.pi / 2) - crosshair_vector.y * math.sin(math.pi / 2),
+            y = crosshair_vector.x * math.sin(math.pi / 2) + crosshair_vector.y * math.cos(math.pi / 2)
         }
 
         local rotated_dir2 = {
-            x = direction.x * math.cos(-math.pi / 2) - direction.y * math.sin(-math.pi / 2),
-            y = direction.x * math.sin(-math.pi / 2) + direction.y * math.cos(-math.pi / 2)
+            x = crosshair_vector.x * math.cos(-math.pi / 2) - crosshair_vector.y * math.sin(-math.pi / 2),
+            y = crosshair_vector.x * math.sin(-math.pi / 2) + crosshair_vector.y * math.cos(-math.pi / 2)
         }
 
         local degree = math.random(0, 360)
@@ -129,7 +176,7 @@ function player:shoot(dt)
 
         position.x, position.y = position.x - 12.5, position.y - 12.5
         table.insert(self.bullets, {
-            direction = direction,
+            direction = { x = crosshair_vector.x, y = crosshair_vector.y },
             rect = { x = position.x, y = position.y, width = 25, height = 25 },
             speed = 1000,
             sparkles = sparkles,
@@ -146,7 +193,10 @@ function player:draw()
 end
 
 function player:draw_crosshair()
-    local pos = { x = self.origin.x + self.crosshair_vector.x, y = self.origin.y + self.crosshair_vector.y }
+    local pos = {
+        x = self.origin.x + self.crosshair_vector.x * self.crosshair_length,
+        y = self.origin.y + self.crosshair_vector.y * self.crosshair_length
+    }
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.rectangle("fill", pos.x - 2, pos.y - 2, 4, 4)
 

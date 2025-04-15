@@ -17,3 +17,7 @@ function update_color(object, dt, speed)
     local bx, by = unpack(blue_vector)
     object.color[3] = ((cx * bx + cy * by) + 1) / 2
 end
+
+function vector_length(x, y)
+    return math.sqrt(x ^ 2 + y ^ 2)
+end
