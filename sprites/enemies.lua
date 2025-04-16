@@ -12,7 +12,7 @@ end
 function enemies:update(dt)
     self.spawn_timer = self.spawn_timer - dt
     if self.spawn_timer < 0 then
-        self.spawn_timer = 1000.0
+        self.spawn_timer = 2.0
         self:spawn_enemies()
     end
 
@@ -34,6 +34,12 @@ function enemies:update(dt)
             end
         end
     end
+
+    for i = #self.list, 1, -1 do
+        if self.list[i].is_dead then
+            table.remove(self.list, i)
+        end
+    end
 end
 
 function enemies:move_towards_player(dt)
@@ -49,6 +55,8 @@ function enemies:move_towards_player(dt)
 
             enemy.position.x = enemy.position.x + direction.x * enemy.speed * dt
             enemy.position.y = enemy.position.y + direction.y * enemy.speed * dt
+            enemy.rect.x = enemy.position.x
+            enemy.rect.y = enemy.position.y
             enemy.origin.x = enemy.position.x + enemy.anim.width / 2
             enemy.origin.y = enemy.position.y + enemy.anim.height / 2
         end
@@ -81,8 +89,15 @@ function enemies:spawn_enemies()
         local x, y = love.math.random(100, canvas_width - 100), love.math.random(100, canvas_height - 100)
         table.insert(self.list,
             {
+                is_dead = false,
                 is_spawned = false,
                 position = { x = x, y = y },
+                rect = {
+                    x = 0,
+                    y = 0,
+                    width = self.texture:getWidth() / 3,
+                    height = self.texture:getHeight()
+                },
                 origin = { x = x + self.texture:getWidth() / 3 / 2, y = y + self.texture:getHeight() / 2 },
                 speed = 150,
                 anim = {

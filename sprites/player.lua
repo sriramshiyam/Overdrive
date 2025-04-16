@@ -64,10 +64,12 @@ function player:update_crosshair(dt)
 
     for i = 1, #enemies.list do
         local enemy = enemies.list[i]
-        local length = vector_length(enemy.origin.x - self.origin.x, enemy.origin.y - self.origin.y)
-        if length < nearest_length then
-            nearest_length = length
-            nearest_enemy = enemy
+        if enemy.is_spawned then
+            local length = vector_length(enemy.origin.x - self.origin.x, enemy.origin.y - self.origin.y)
+            if length < nearest_length then
+                nearest_length = length
+                nearest_enemy = enemy
+            end
         end
     end
 
@@ -115,13 +117,32 @@ function player:update_bullets(dt)
             (bullet.rect.y > canvas_height + 200) or (bullet.rect.y < -200) then
             table.remove(self.bullets, i)
         end
+
+        local remove = false
+
+        for j = 1, #enemies.list do
+            if enemies.list[j].is_spawned then
+                local rect1 = enemies.list[j].rect
+                local rect2 = bullet.rect
+
+                if ((rect1.x + rect1.width) > rect2.x) and (rect1.x < (rect2.x + rect2.width))
+                    and ((rect1.y + rect1.height) > rect2.y) and (rect1.y < (rect2.y + rect2.height)) then
+                    remove = true
+                    enemies.list[j].is_dead = true
+                end
+            end
+        end
+
+        if remove then
+            table.remove(self.bullets, i)
+        end
     end
 end
 
 function player:shoot(dt)
     self.shoot_timer = self.shoot_timer - dt
     if self.shoot_timer < 0 then
-        self.shoot_timer = 0.3
+        self.shoot_timer = 0.2
 
         local position = {
             x = self.origin.x + self.crosshair_vector.x * 40,
