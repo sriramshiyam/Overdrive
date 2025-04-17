@@ -142,6 +142,7 @@ end
 function player:shoot(dt)
     self.shoot_timer = self.shoot_timer - dt
     if self.shoot_timer < 0 then
+        sound.laser:play()
         self.shoot_timer = 0.2
 
         local position = {

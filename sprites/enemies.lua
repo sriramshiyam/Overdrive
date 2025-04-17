@@ -37,6 +37,7 @@ function enemies:update(dt)
 
     for i = #self.list, 1, -1 do
         if self.list[i].is_dead then
+            sound:play_destroyed()
             table.remove(self.list, i)
         end
     end
@@ -87,6 +88,11 @@ function enemies:spawn_enemies()
     local no_of_enemies = love.math.random(2, 4)
     for _ = 1, no_of_enemies do
         local x, y = love.math.random(100, canvas_width - 100), love.math.random(100, canvas_height - 100)
+
+        while vector_length(player.position.x - x, player.position.y - y) < 300 do
+            x, y = love.math.random(100, canvas_width - 100), love.math.random(100, canvas_height - 100)
+        end
+
         table.insert(self.list,
             {
                 is_dead = false,

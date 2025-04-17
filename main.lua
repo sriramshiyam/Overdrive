@@ -1,4 +1,6 @@
 require "utils.globals"
+require "utils.sound"
+require "utils.music"
 require "utils.hud"
 require "sprites.player"
 require "sprites.enemies"
@@ -22,6 +24,8 @@ function love.load()
             love.window.setPosition(0, 0, 2)
         end
     end
+    sound:load()
+    music:load()
     hud:load()
     player:load()
     enemies:load()
