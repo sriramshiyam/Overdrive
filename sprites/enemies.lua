@@ -7,17 +7,32 @@ function enemies:load()
     self.list = {}
     self.spawn_anim = {}
     self.spawn_timer = 2.0
+    self.wave = 1
+    self.wave_timer = 30
 end
 
 function enemies:update(dt)
+    if self.wave_timer > 0 then
+        self.wave_timer = self.wave_timer - dt
+    else
+        if not player.frenzy_mode then
+            player:init_frenzy_mode()
+        end
+        if music.game:getPitch() == 1.0 then
+            music.game:setPitch(1.2)
+        end
+    end
+
     self.spawn_timer = self.spawn_timer - dt
-    if self.spawn_timer < 0 then
-        self.spawn_timer = 2.0
+    if self.spawn_timer < 0 and not player.crosshairs.loading then
+        self.spawn_timer = (self.wave_timer > 0 and 2.0) or 1.0
         self:spawn_enemies()
     end
 
     if #self.list > 0 then
-        self:move_towards_player(dt)
+        if not player.crosshairs.loading then
+            self:move_towards_player(dt)
+        end
         for i = 1, #self.list do
             if self.list[i].is_spawned then
                 self:update_animation(self.list[i].anim, dt)
@@ -85,7 +100,7 @@ function enemies:update_animation(anim, dt)
 end
 
 function enemies:spawn_enemies()
-    local no_of_enemies = love.math.random(2, 4)
+    local no_of_enemies = (self.wave_timer > 0 and love.math.random(2, 4)) or love.math.random(8, 10)
     for _ = 1, no_of_enemies do
         local x, y = love.math.random(100, canvas_width - 100), love.math.random(100, canvas_height - 100)
 
@@ -95,6 +110,7 @@ function enemies:spawn_enemies()
 
         table.insert(self.list,
             {
+                marked_no = 0,
                 is_dead = false,
                 is_spawned = false,
                 position = { x = x, y = y },
@@ -105,7 +121,7 @@ function enemies:spawn_enemies()
                     height = self.texture:getHeight()
                 },
                 origin = { x = x + self.texture:getWidth() / 3 / 2, y = y + self.texture:getHeight() / 2 },
-                speed = 150,
+                speed = 300,
                 anim = {
                     width = self.texture:getWidth() / 3,
                     height = self.texture:getHeight(),

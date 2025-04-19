@@ -35,6 +35,8 @@ function love.update(dt)
     hud:update(dt)
     player:update(dt)
     enemies:update(dt)
+    -- local luaMemory = collectgarbage("count") / 1024
+    -- print(string.format("RAM Memory: %.2f MB", luaMemory))
 end
 
 function love.draw()

@@ -5,6 +5,10 @@ function sound:load()
     self.destroyed = love.audio.newSource("res/sound/destroyed.wav", "static")
 end
 
+function sound:play_laser()
+    self.laser:clone():play()
+end
+
 function sound:play_destroyed()
     self.destroyed:clone():play()
 end
