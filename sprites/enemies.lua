@@ -20,6 +20,7 @@ function enemies:update(dt)
         end
         if music.game:getPitch() == 1.0 then
             music.game:setPitch(1.2)
+            sound.destroyed:setVolume(0.5)
         end
     end
 
@@ -33,9 +34,17 @@ function enemies:update(dt)
         if not player.crosshairs.loading then
             self:move_towards_player(dt)
         end
+
         for i = 1, #self.list do
-            if self.list[i].is_spawned then
-                self:update_animation(self.list[i].anim, dt)
+            local enemy = self.list[i]
+            if enemy.is_spawned and not enemy.is_dead then
+                self:update_animation(enemy.anim, dt)
+            end
+            if enemy.is_dead then
+                enemy.scale = enemy.scale - dt * 2.5
+                enemy.rotation = enemy.rotation + dt * 1000
+                enemy.position.x = enemy.position.x + enemy.dead_direction.x * 300 * dt
+                enemy.position.y = enemy.position.y + enemy.dead_direction.y * 300 * dt
             end
         end
 
@@ -51,8 +60,7 @@ function enemies:update(dt)
     end
 
     for i = #self.list, 1, -1 do
-        if self.list[i].is_dead then
-            sound:play_destroyed()
+        if self.list[i].scale < 0 then
             table.remove(self.list, i)
         end
     end
@@ -62,7 +70,7 @@ function enemies:move_towards_player(dt)
     for i = 1, #self.list do
         local enemy = self.list[i]
 
-        if enemy.is_spawned then
+        if enemy.is_spawned and not enemy.is_dead then
             local direction = { x = player.origin.x - enemy.origin.x, y = player.origin.y - enemy.origin.y }
             local length = vector_length(direction.x, direction.y)
 
@@ -71,8 +79,8 @@ function enemies:move_towards_player(dt)
 
             enemy.position.x = enemy.position.x + direction.x * enemy.speed * dt
             enemy.position.y = enemy.position.y + direction.y * enemy.speed * dt
-            enemy.rect.x = enemy.position.x
-            enemy.rect.y = enemy.position.y
+            enemy.rect.x = enemy.position.x - enemy.anim.width / 2
+            enemy.rect.y = enemy.position.y - enemy.anim.height / 2
             enemy.origin.x = enemy.position.x + enemy.anim.width / 2
             enemy.origin.y = enemy.position.y + enemy.anim.height / 2
         end
@@ -114,6 +122,8 @@ function enemies:spawn_enemies()
                 is_dead = false,
                 is_spawned = false,
                 position = { x = x, y = y },
+                rotation = 0,
+                scale = 1,
                 rect = {
                     x = 0,
                     y = 0,
@@ -157,7 +167,9 @@ function enemies:draw()
     for i = 1, #self.list do
         if self.list[i].is_spawned then
             local quad, x, y = self.list[i].anim.quad, self.list[i].position.x, self.list[i].position.y
-            love.graphics.draw(self.texture, quad, x, y)
+            local rotation, scale = self.list[i].rotation, self.list[i].scale
+            local width, height = self.list[i].anim.width, self.list[i].anim.height
+            love.graphics.draw(self.texture, quad, x, y, rotation * math.pi / 180, scale, scale, width / 2, height / 2)
         else
             local spawn_anim = self.spawn_anim
             local quad, x, y = spawn_anim.quad, self.list[i].origin.x, self.list[i].origin.y

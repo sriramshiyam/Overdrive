@@ -89,7 +89,7 @@ function player:update_crosshair(crosshair, dt)
 
     for i = 1, #enemies.list do
         local enemy = enemies.list[i]
-        if enemy.is_spawned and (enemy.marked_no == 0 or enemy.marked_no == crosshair.no) then
+        if enemy.is_spawned and not enemy.is_dead and (enemy.marked_no == 0 or enemy.marked_no == crosshair.no) then
             local length = vector_length(enemy.origin.x - self.origin.x, enemy.origin.y - self.origin.y)
             if length < nearest_length then
                 enemy.marked_no = crosshair.no
@@ -103,8 +103,8 @@ function player:update_crosshair(crosshair, dt)
 
     if nearest_enemy ~= nil then
         local enemy_vector = {
-            x = nearest_enemy.origin.x - self.origin.x,
-            y = nearest_enemy.origin.y - self.origin.y
+            x = nearest_enemy.position.x - self.origin.x,
+            y = nearest_enemy.position.y - self.origin.y
         }
         local length = vector_length(enemy_vector.x, enemy_vector.y)
         enemy_vector.x = enemy_vector.x / length
@@ -148,14 +148,24 @@ function player:update_bullets(dt)
         local remove = false
 
         for j = 1, #enemies.list do
-            if enemies.list[j].is_spawned then
-                local rect1 = enemies.list[j].rect
+            local enemy = enemies.list[j]
+            if enemy.is_spawned and not enemy.is_dead then
+                local rect1 = enemy.rect
                 local rect2 = bullet.rect
 
                 if ((rect1.x + rect1.width) > rect2.x) and (rect1.x < (rect2.x + rect2.width))
                     and ((rect1.y + rect1.height) > rect2.y) and (rect1.y < (rect2.y + rect2.height)) then
+                    sound:play_destroyed()
                     remove = true
-                    enemies.list[j].is_dead = true
+                    enemy.is_dead = true
+
+                    local dead_direction = { x = enemy.rect.x - self.position.x, y = enemy.rect.y - self.position.y }
+                    local length = vector_length(dead_direction.x, dead_direction.y)
+
+                    dead_direction.x = dead_direction.x / length
+                    dead_direction.y = dead_direction.y / length
+
+                    enemy.dead_direction = dead_direction
                 end
             end
         end
